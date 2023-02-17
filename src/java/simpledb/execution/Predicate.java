@@ -11,6 +11,9 @@ import java.io.Serializable;
 public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private int field;
+    private Op op;
+    private Field operand;
 
     /**
      * Constants used for return codes in Field.compare
@@ -55,14 +58,11 @@ public class Predicate implements Serializable {
      * @param op      operation to use for comparison
      * @param operand field value to compare passed in tuples to
      */
-    private int field;
-    private Op op;
-    private Field operand;
     public Predicate(int field, Op op, Field operand) {
         // TODO: some code goes here
-        this.field=field;
-        this.op=op;
-        this.operand=operand;
+        this.field = field;
+        this.op = op;
+        this.operand = operand;
     }
 
     /**
@@ -100,8 +100,10 @@ public class Predicate implements Serializable {
      */
     public boolean filter(Tuple t) {
         // TODO: some code goes here
-        Field target_field=t.getField(field);
-        return target_field.compare(op,operand);
+        if(t.getField(this.field) == null){
+            throw new RuntimeException("Field does not exist in tuple");
+        }
+        return t.getField(this.field).compare(this.op, this.operand);
     }
 
     /**
@@ -110,6 +112,13 @@ public class Predicate implements Serializable {
      */
     public String toString() {
         // TODO: some code goes here
-        return "f= "+this.field+"op= "+this.op+"operand= "+this.operand;
+        StringBuilder out = new StringBuilder();
+        out.append("field = ");
+        out.append(this.field);
+        out.append("op = ");
+        out.append(this.op);
+        out.append("operand = ");
+        out.append(this.operand);
+        return out.toString();
     }
 }
