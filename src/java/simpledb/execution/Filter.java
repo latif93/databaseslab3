@@ -13,6 +13,8 @@ import java.util.NoSuchElementException;
 public class Filter extends Operator {
 
     private static final long serialVersionUID = 1L;
+    private Predicate p;
+    private OpIterator child;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
@@ -21,38 +23,38 @@ public class Filter extends Operator {
      * @param p     The predicate to filter tuples with
      * @param child The child operator
      */
-    private Predicate predicate;
-    private OpIterator child;
     public Filter(Predicate p, OpIterator child) {
         // TODO: some code goes here
-        this.predicate=p;
-        this.child=child;
+        this.p = p;
+        this.child = child;
     }
 
     public Predicate getPredicate() {
         // TODO: some code goes here
-        return predicate;
+        return this.p;
     }
 
     public TupleDesc getTupleDesc() {
         // TODO: some code goes here
-        return child.getTupleDesc();
+        return this.child.getTupleDesc();
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // TODO: some code goes here
-        child.open();
+        this.child.open();
+        super.open();
     }
 
     public void close() {
         // TODO: some code goes here
-        child.close();
+        this.child.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // TODO: some code goes here
-        child.rewind();
+        this.child.rewind();
     }
 
     /**
@@ -67,9 +69,9 @@ public class Filter extends Operator {
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // TODO: some code goes here
-        while (child.hasNext()){
-            Tuple curr=child.next();
-            if (predicate.filter(curr)){
+        while(child.hasNext()){
+            Tuple curr = child.next();
+            if(this.p.filter(curr)){
                 return curr;
             }
         }
@@ -79,12 +81,15 @@ public class Filter extends Operator {
     @Override
     public OpIterator[] getChildren() {
         // TODO: some code goes here
-        return null;
+        return new OpIterator[]{this.child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // TODO: some code goes here
+        if (this.child != children[0]) {
+            this.child = children[0];
+        }
     }
 
 }
