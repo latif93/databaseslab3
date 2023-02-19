@@ -1,5 +1,6 @@
 package simpledb.execution;
 
+import java.util.*;
 import simpledb.common.Type;
 import simpledb.storage.Tuple;
 
@@ -45,8 +46,57 @@ public class IntegerAggregator implements Aggregator {
      */
     public OpIterator iterator() {
         // TODO: some code goes here
-        throw new
-        UnsupportedOperationException("please implement me for lab2");
+        throw new UnsupportedOperationException("please implement me for lab2");
     }
 
+    private class intAggIterator {
+    private int aggregate(ArrayList<integer> elems){
+        //can not aggregate on empty elements
+        if (elems.length()==0){
+            throw new UnsupportedOperationException("expected atleast one element");
+        }
+            int result = 0;
+            switch (what) {
+                case MIN:
+                //get the very first elems
+                    result=elems.get(0);
+                    for (int i:elems){
+                        if i<result:
+                        result=i;
+                    }
+                    break;
+                case MAX:
+                    result=elems.get(0);
+                    for (int i:elems){
+                        if i>result:
+                        result=i;
+                    }
+                    break;
+                    //SUM , AVG , MIN , MAX
+
+                case SUM:
+                    result=0;
+                    for (int i:elems){
+                        result=result+i;
+                    }
+                    break;
+                case AVG:
+                    int tempsum=0;
+                    for (int i:elems){
+                        tempsum=tempsum+i;
+                    }
+                    result=tempsum/elems.length();
+                    break;
+                case COUNT:
+                    result=elems.length();
+                    break;
+                default:
+                    throw new notImplementedException();
+            }
+        }
+    
+
+
+
+    }
 }
