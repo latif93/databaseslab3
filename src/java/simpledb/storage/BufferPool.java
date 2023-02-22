@@ -40,7 +40,6 @@ public class BufferPool {
 
     final int numPages;   // number of pages -- currently, not enforced
     final ConcurrentMap<PageId, Page> pages; // hash table storing current pages in memory
-
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -164,6 +163,9 @@ public class BufferPool {
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // TODO: some code goes here
+        DbFile table = Database.getCatalog().getDatabaseFile(tableId);
+        table.insertTuple(tid, t);
+
     }
 
     /**
@@ -182,6 +184,9 @@ public class BufferPool {
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // TODO: some code goes here
+        HeapPage page = ((HeapPage) getPage(tid, t.getRecordId().getPageId(), null));
+        ((HeapPage) getPage(tid, t.getRecordId().getPageId(), null)).deleteTuple(t);
+
     }
 
     /**
@@ -205,6 +210,7 @@ public class BufferPool {
      */
     public synchronized void removePage(PageId pid) {
         // TODO: some code goes here
+        pages.remove(pid);
     }
 
     /**
@@ -223,13 +229,11 @@ public class BufferPool {
         // TODO: some code goes here
         // not necessary for lab1|lab2
     }
-
     /**
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
         // TODO: some code goes here
-    }
-
+        }
 }
