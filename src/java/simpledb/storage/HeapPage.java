@@ -10,6 +10,8 @@ import java.io.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import static java.lang.Math.floor;
+
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and
  * implements the Page interface that is used by BufferPool.
@@ -27,6 +29,7 @@ public class HeapPage implements Page {
 
     byte[] oldData;
     private final Byte oldDataLock = (byte) 0;
+    private TransactionId dirtyingTID;
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -257,6 +260,24 @@ public class HeapPage implements Page {
      */
     public void deleteTuple(Tuple t) throws DbException {
         // TODO: some code goes here
+        if(t.getRecordId() == null){
+            throw new DbException("tuple does not exist in page");
+        }
+        if(t.getRecordId().getPageId() != this.pid){
+            throw new DbException("tuple does not exist in page");
+        }
+        int count = 0;
+        for (int i = 0; i < numSlots; i++) {
+            if(tuples[i] != null) {
+                if (t.getRecordId().equals(tuples[i].getRecordId()) && isSlotUsed(i)) {
+                    markDirty(true, null);
+                    tuples[i] = null;
+                    markSlotUsed(i, false);
+                    return;
+                }
+            }
+        }
+        throw new DbException("no tuple here to delete");
     }
 
     /**
@@ -269,14 +290,35 @@ public class HeapPage implements Page {
      */
     public void insertTuple(Tuple t) throws DbException {
         // TODO: some code goes here
+        if(!t.getTupleDesc().equals(td)){
+            throw new DbException("tupledesc mismatch");
+        }
+        for(int i = 0; i < numSlots; i++){
+            if(!isSlotUsed(i)){
+                RecordId rec = new RecordId(pid, i);
+                t.setRecordId(rec);
+                markDirty(true, this.dirtyingTID);
+                tuples[i] = t;
+                markSlotUsed(i, true);
+                return;
+            }
+        }
+        throw new DbException("tuple cannot be added when page is full");
     }
 
     /**
      * Marks this page as dirty/not dirty and record that transaction
      * that did the dirtying
      */
+
     public void markDirty(boolean dirty, TransactionId tid) {
         // TODO: some code goes here
+        if(dirty){
+            dirtyingTID = tid;
+        }
+        else{
+            dirtyingTID = null;
+        }
     }
 
     /**
@@ -284,7 +326,8 @@ public class HeapPage implements Page {
      */
     public TransactionId isDirty() {
         // TODO: some code goes here
-        return null;      
+
+        return dirtyingTID;
     }
 
     /**
@@ -312,6 +355,14 @@ public class HeapPage implements Page {
      */
     private void markSlotUsed(int i, boolean value) {
         // TODO: some code goes here
+        int headerbit = i % 8;
+        int headerbyte = (i - headerbit) / 8;
+        if (value) {
+            header[headerbyte] = (byte) (header[headerbyte] | (1 << headerbit));
+        } else {
+            header[headerbyte] = (byte) (header[headerbyte] & ~(1 << headerbit));
+        }
+        //System.out.print(headerbyte + " " + headerbit);
     }
 
     /**
